@@ -3,27 +3,8 @@
 #include "VertexAttrib.hpp"
 #include <iostream>
 #include <math.h>
+#include "Emitter.hpp"
 
-const char *vertexShaderSource = 
-"#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"layout (location = 1) in vec3 aColor;\n"
-"out vec3 outColor;\n"
-"void main()\n"
-"{\n"
-" gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-" outColor = aColor;"
-"}\0";
-
-const char *fragmentShaderSource = 
-"#version 330 core\n"
-"in vec3 outColor;"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(outColor, 1.0);\n"
-"}\0"
-;
 
 void InitGLFW()
 {
@@ -91,21 +72,29 @@ void Window::Terminate()
 void Window::OnExecute()
 {
     Initialize();
-    unsigned int shaderProgram = LoadShaders(vertexShaderSource, fragmentShaderSource);
+    unsigned int shaderProgram = LoadShaders("./shader/vertexShader.shader", "./shader/fragmentShader.shader");
 
     // the square vertices
     float vertices[] = 
     {
-     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
-    -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
-     0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top  
-    };
-    unsigned int indices[] = 
-    {
-        0, 1, 2,
+        0.4f, 0.1f, 0.0f,
+        0.5f, 0.1f, 0.0f,
+        0.5f, 0.0f, 0.0f,
+        0.4f, 0.1f, 0.0f,
+        0.4f, 0.0f, 0.0f,
+        0.5f, 0.0f, 0.0f,
+
+        -0.4f, -0.1f, 0.0f,
+        -0.5f, -0.1f, 0.0f,
+        -0.5f, 0.0f, 0.0f,
+        -0.4f, -0.1f, 0.0f,
+        -0.4f, 0.0f, 0.0f,
+        -0.5f, 0.0f, 0.0f,
+
     };
 
-    unsigned int VAO = configureVertexAttribute(vertices, sizeof(vertices), indices, sizeof(indices));
+
+    unsigned int VAO = configureVertexAttribute(vertices, sizeof(vertices));
 
     while(!glfwWindowShouldClose(window))
 	{
@@ -115,16 +104,12 @@ void Window::OnExecute()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-        // update the uniform color
-        // float timeValue = glfwGetTime();
-        // float greenValue = sin(timeValue) / 2.0f + 0.5f;
-        // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        // glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        /* Update The Vertices*/        
+        VAO = configureVertexAttribute(vertices, sizeof(vertices));
 
         // draw out first triangle
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);        
-        // -----------------------------------
+        glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices)/(sizeof(float) * 3));
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

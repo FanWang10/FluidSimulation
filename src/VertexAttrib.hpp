@@ -4,6 +4,6 @@
 #include <GLFW/glfw3.h>
 
 // return VAO
-unsigned int configureVertexAttribute(float * vertices, int sizeVertices, unsigned int * indices, int sizeIndices);
+unsigned int configureVertexAttribute(float * vertices, int sizeVertices);
 
 #endif
