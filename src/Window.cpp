@@ -7,18 +7,21 @@
 const char *vertexShaderSource = 
 "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"layout (location = 1) in vec3 aColor;\n"
+"out vec3 outColor;\n"
 "void main()\n"
 "{\n"
 " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+" outColor = aColor;"
 "}\0";
 
 const char *fragmentShaderSource = 
 "#version 330 core\n"
+"in vec3 outColor;"
 "out vec4 FragColor;\n"
-"uniform vec4 ourColor;\n"
 "void main()\n"
 "{\n"
-"   FragColor = ourColor;\n"
+"   FragColor = vec4(outColor, 1.0);\n"
 "}\0"
 ;
 
@@ -93,15 +96,13 @@ void Window::OnExecute()
     // the square vertices
     float vertices[] = 
     {
-        0.5f,  0.5f, 0.0f,  // top right
-        0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+    -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+     0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top  
     };
     unsigned int indices[] = 
     {
-        0, 1, 3,
-        1, 2, 3
+        0, 1, 2,
     };
 
     unsigned int VAO = configureVertexAttribute(vertices, sizeof(vertices), indices, sizeof(indices));
@@ -115,10 +116,10 @@ void Window::OnExecute()
 		glClear(GL_COLOR_BUFFER_BIT);
 
         // update the uniform color
-        float timeValue = glfwGetTime();
-        float greenValue = sin(timeValue) / 2.0f + 0.5f;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        // float timeValue = glfwGetTime();
+        // float greenValue = sin(timeValue) / 2.0f + 0.5f;
+        // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        // glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
         // draw out first triangle
         glBindVertexArray(VAO);
