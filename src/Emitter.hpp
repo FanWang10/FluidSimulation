@@ -16,8 +16,12 @@ class Emitter
 {
     public:
         Emitter(int size);
-        void update();
-        void  draw();
+        void update(float time);
+        unsigned int  draw();
+        int sizeOfPoints()
+        {
+            return vertices.size() / 3;
+        }
 
     private:
         std::vector< Particle > particles;

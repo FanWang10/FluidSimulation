@@ -73,29 +73,8 @@ void Window::OnExecute()
 {
     Initialize();
     unsigned int shaderProgram = LoadShaders("./shader/vertexShader.shader", "./shader/fragmentShader.shader");
-
-    // the square vertices
-    float vertices[] = 
-    {
-        0.4f, 0.1f, 0.0f,
-        0.5f, 0.1f, 0.0f,
-        0.5f, 0.0f, 0.0f,
-        0.4f, 0.1f, 0.0f,
-        0.4f, 0.0f, 0.0f,
-        0.5f, 0.0f, 0.0f,
-
-        -0.4f, -0.1f, 0.0f,
-        -0.5f, -0.1f, 0.0f,
-        -0.5f, 0.0f, 0.0f,
-        -0.4f, -0.1f, 0.0f,
-        -0.4f, 0.0f, 0.0f,
-        -0.5f, 0.0f, 0.0f,
-
-    };
-
-
-    unsigned int VAO = configureVertexAttribute(vertices, sizeof(vertices));
-
+    Emitter e(5);
+    unsigned int VAO = e.draw();
     while(!glfwWindowShouldClose(window))
 	{
         glUseProgram(shaderProgram);
@@ -104,12 +83,12 @@ void Window::OnExecute()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-        /* Update The Vertices*/        
-        VAO = configureVertexAttribute(vertices, sizeof(vertices));
+        VAO = e.draw();
 
         // draw out first triangle
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices)/(sizeof(float) * 3));
+        glDrawArrays(GL_TRIANGLES, 0, e.sizeOfPoints());
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
