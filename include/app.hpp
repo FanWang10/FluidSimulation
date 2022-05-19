@@ -19,7 +19,7 @@ class App
 		unsigned int computeProgram[3]{0, 0, 0};
 		unsigned int particlePosVAO = 0;
 		unsigned int particleBuffer = 0;
-
+		
 		
 		void loop();
 		void compileShader(unsigned int programID, const char * path, GLenum shaderType);
@@ -40,4 +40,6 @@ class App
 	private:
     		int numOfParticle = 20000;
     		float particleRadius = 0.005f;
+			unsigned int groupSize = 124;
+			unsigned int workGroups = (numOfParticle + groupSize - 1) / groupSize;
 };	

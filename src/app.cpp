@@ -1,5 +1,6 @@
 #include "../include/app.hpp"
 
+
 void processInput(GLFWwindow * window)
 {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -78,8 +79,21 @@ void App::loop()
 	glUseProgram(renderProgram);
 	glDrawArrays(GL_POINTS, 0, numOfParticle);
 	// -----------------------------------
+	
+	// ------------- do simulation --------
+	glUseProgram(computeProgram[0]);
+	glDispatchCompute(workGroups, 1, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	
+	glUseProgram(computeProgram[1]);
+	glDispatchCompute(workGroups, 1, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	// -------------------
+	glUseProgram(computeProgram[2]);
+	glDispatchCompute(workGroups, 1, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	
+	// ------------------------------------
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
@@ -139,16 +153,27 @@ void App::InitializeShader()
 	// Compute Program
 	computeProgram[0] = glCreateProgram();
 	// density and pressure shader
+	compileShader(computeProgram[0], "./shader/densityPressure.comp", GL_COMPUTE_SHADER);
+	// link program
+	glLinkProgram(computeProgram[0]);
+	checkCompileError(computeProgram[0], "PROGRAM");
 
 	// Compute Program
 	computeProgram[1] = glCreateProgram();
-	// accleration shader
+	// force shader
+	compileShader(computeProgram[1], "./shader/force.comp", GL_COMPUTE_SHADER);
+	// link program
+	glLinkProgram(computeProgram[1]);
+	checkCompileError(computeProgram[1], "PROGRAM");
 	
 	// compute Program 
 	computeProgram[2] = glCreateProgram();
 	// integrate acceleration to find new positions
+	compileShader(computeProgram[2], "./shader/integrate.comp", GL_COMPUTE_SHADER);
+	// link program
+	glLinkProgram(computeProgram[2]);
+	checkCompileError(computeProgram[2], "PROGRAM");
 
-	
 }
 
 void App::Run(int windowWidth, int windowHeight)
@@ -179,18 +204,29 @@ void App::Run(int windowWidth, int windowHeight)
 
 	// -------------- ssbo sizes -------------
 	ptrdiff_t positionSSBOsize = sizeof(glm::vec2) * numOfParticle;
-
-
+	ptrdiff_t velocitySSBOsize = sizeof(glm::vec2) * numOfParticle;
+	ptrdiff_t forceSSBOsize = sizeof(glm::vec2) * numOfParticle;
+	ptrdiff_t densitySSBOsize = sizeof(float) * numOfParticle;
+	ptrdiff_t pressureSSBOsize = sizeof(float) * numOfParticle;
+	ptrdiff_t fullBufferSSBOsize = positionSSBOsize +
+					velocitySSBOsize +
+					forceSSBOsize +
+					pressureSSBOsize +
+					densitySSBOsize;
 	// -------------- ssbo offsets ----------
 	ptrdiff_t positionSSBOoffset = 0;
+	ptrdiff_t velocitySSBOoffset = positionSSBOoffset + positionSSBOsize;
+	ptrdiff_t forceSSBOoffset = velocitySSBOoffset + velocitySSBOsize;
+	ptrdiff_t densitySSBOoffset = forceSSBOoffset + forceSSBOsize;
+	ptrdiff_t pressureSSBOoffset = pressureSSBOoffset + pressureSSBOsize;
 
 
-    	void * initialData = std::malloc(positionSSBOsize);
-    	std::memset(initialData, 0, positionSSBOsize);
+    	void * initialData = std::malloc(fullBufferSSBOsize);
+    	std::memset(initialData, 0, fullBufferSSBOsize);
     	std::memcpy(initialData, initPosition.data(), positionSSBOsize);
-    	glGenBuffers(1, &particleBuffer);
+	glGenBuffers(1, &particleBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, particleBuffer);
-	glBufferStorage(GL_SHADER_STORAGE_BUFFER, positionSSBOsize, initialData, GL_DYNAMIC_STORAGE_BIT);
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, fullBufferSSBOsize, initialData, GL_DYNAMIC_STORAGE_BIT);
 	std::free(initialData);
 	
 	// VAO VBO and BUFFER OBJECT
@@ -205,8 +241,11 @@ void App::Run(int windowWidth, int windowHeight)
 	glBindVertexArray(0);
 
 	// ------- other binding -------------
-
-
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, particleBuffer, positionSSBOoffset, positionSSBOsize);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, particleBuffer, velocitySSBOoffset, velocitySSBOsize);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 2, particleBuffer, forceSSBOoffset, forceSSBOsize);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 3, particleBuffer, densitySSBOoffset, densitySSBOsize);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 4, particleBuffer, pressureSSBOoffset, pressureSSBOsize);
 	// ------- other binding -------------
 
 	glBindVertexArray(particlePosVAO);
